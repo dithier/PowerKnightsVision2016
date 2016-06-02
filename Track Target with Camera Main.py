@@ -7,14 +7,18 @@ Created on Fri May 13 18:10:44 2016
 
 import FindTargetModule as FTM
 import NetworkTableModule as NT
+import allowableError as AE
 import time
 import cv2
 
-directory = 'C:/Users/Driver/Desktop/OpenCV/StrongHold Code_Driver Station Version v2/' # folder npz file is in
+directory = 'C:/Users/Ithier/Documents/OpenCV/FIRST 2016/PowerKnightsVision2016/'
+#directory = 'C:/Users/Ithier/Documents/!!OpenCV/Mayhem/' # folder npz file is in
 frame_0 = directory + 'Raw/'
 frame_p = directory + 'Processed/'
 filename = directory + 'imageValues.npz'
 url = 'http://10.5.1.11/axis-cgi/mjpg/video.cgi?resolution=640x480'
+
+freqFrames = 15 # how often we're sampling the camera to save files 
 #############################################################################
 from networktables import NetworkTable
 import logging
@@ -42,6 +46,8 @@ else:
 cv2.namedWindow('Camera Frame', cv2.WINDOW_NORMAL)
 
 while(cap.isOpened()):
+    i = freqFrames
+    
     # Determine time stamp
     t = time.localtime()
     stamp = str(t[1]) + "_" + str(t[2]) + "_" + str(t[0]) + "time_" + str(t[3]) + "_" + str(t[4]) + "_" + str(t[5])
@@ -57,8 +63,12 @@ while(cap.isOpened()):
         mask = Processed_frame
     else:
         try:
-            # Save orignal frame
-            cv2.imwrite(frame_0 + stamp + '.jpg', frame)
+            if i ==  freqFrames:
+                # Save every 15th frame to file
+                cv2.imwrite(frame_0 + stamp + '.jpg', frame)
+                i = 0
+            else:
+                i = i + 1
         
             # Rotate image
             rows, cols, dim = frame.shape
@@ -67,13 +77,19 @@ while(cap.isOpened()):
         
             # Process image
             Angle, Distance, validUpdate, Processed_frame, mask = FTM.findTarget(Rotated_frame,filename)
+            Locked = False 
             
-            if -0.3 <= Angle <= 0.3:
+            # Determine allowable angle offset 
+            Error = AE.findError(18) 
+            #Error = AE.findError(Distance)
+            
+            if -Error <= Angle <= Error:
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(Processed_frame,'LOCKED',(180,400), font, 3.5,(0,0,255),4,cv2.LINE_AA)
-            
+                cv2.putText(Processed_frame,'LOCKED',(90,400), font, 3.8,(0,255,0),6,cv2.LINE_AA)
+                Locked = True
+                
             # Send to NetworkTable
-            NT.sendValues(sd, Angle, Distance, validUpdate)
+            NT.sendValues(sd, Angle, Distance, validUpdate, Locked)
             
             # Put crosshairs on image
             rows, cols, dim = Processed_frame.shape

@@ -145,27 +145,13 @@ class imageMeasurements:
         h, w, c = self.image.shape # h = height, w = width, c = channel
         offsetpx = (w/2.0) - self.cx # offset from center of camera image to center of target (pixels)
         
-        angle_w = horizontal_cameraFOV * (offsetpx / w)
-        angle = angle_w*(180.0/47.0)
+        angle_w = horizontal_cameraFOV * (offsetpx / w) # camera frame angle
+        angle = int(angle_w*(180.0/47.0)*100.0)/100.0 # world frame angle 
         
         font = cv2.FONT_HERSHEY_COMPLEX
-        self.image = cv2.putText(self.image,'Angle_avg: ' + str(angle),(10,50), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        self.image = cv2.putText(self.image,'Angle: ' + str(angle),(90,50), font, 1,(0,0,255),2,cv2.LINE_AA)
 
         return angle
-    
-    def changeCoor(self):
-        centerX = w/2.0
-        centerY = h/2.0
-        
-        X_LocationD = (self.cx - centerX) / centerX
-        X_LocationD = int(X_LocationD*100.0)/100.0
-        
-        Y_LocationD = -(self.cy - centerY) / centerY
-        Y_LocationD = int(Y_LocationD*100.0)/100.0
-        
-        self.image = cv2.putText(self.image,'Center Location: (' + str(X_LocationD) + ', ' + str(Y_LocationD) + ')',(10,300), font, 0.5,(0,0,255),1,cv2.LINE_AA)
-        return X_LocationD, Y_LocationD     
-        
         
     def findDistance(self, Rect_coor):
         towerH = (89/12) # height from ground to center of target (in real life) in ft
@@ -197,7 +183,7 @@ class imageMeasurements:
         
         font = cv2.FONT_HERSHEY_SIMPLEX
         # check to make sure right number displayed
-        self.image = cv2.putText(self.image,'Distance: ' + str(distance_final) + 'ft',(300,50), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+        self.image = cv2.putText(self.image,'Distance: ' + str(distance_final) + 'ft',(90,280), font, 1,(0,0,255),2,cv2.LINE_AA)
         
         return distance_final
         

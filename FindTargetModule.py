@@ -68,7 +68,6 @@ def findTarget(img_orig, filename):
             if MI.isValidAR(Rect_coor):
                 angle = calculations.findAngle()
                 distance = calculations.findDistance(Rect_coor)
-                X_LocationD, Y_LocationD = calculations.changeCoor() 
                 validUpdate = True
             else:
                 validUpdate = False
@@ -85,4 +84,4 @@ def findTarget(img_orig, filename):
         print 'No Valid Update: Contours not valid'
     
     
-    return angle_avg, distance, validUpdate, BFR_img, mask
+    return angle, distance, validUpdate, BFR_img, mask

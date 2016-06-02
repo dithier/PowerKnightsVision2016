@@ -155,7 +155,7 @@ def shapeMatch(hull):
     
 def validStatus(BFR_img):
     font = cv2.FONT_HERSHEY_COMPLEX
-    BFR_img = cv2.putText(BFR_img,'Valid Update: False',(10,50), font, 0.5,(0,0,255),1,cv2.LINE_AA)
+    BFR_img = cv2.putText(BFR_img,'Valid Update: False',(10,50), font, 1,(0,0,255),1,cv2.LINE_AA)
     return BFR_img
         
     
