@@ -18,7 +18,8 @@ frame_p = directory + 'Processed/'
 filename = directory + 'imageValues.npz'
 url = 'http://10.5.1.11/axis-cgi/mjpg/video.cgi?resolution=640x480'
 
-freqFrames = 15 # how often we're sampling the camera to save files 
+freqFramesCam = 20 # how often we're sampling the camera to save files 
+freqFramesNT = 10 # how often we're sending to network tables
 #############################################################################
 from networktables import NetworkTable
 import logging
@@ -45,14 +46,9 @@ else:
 # Create resizable window for camera 
 cv2.namedWindow('Camera Frame', cv2.WINDOW_NORMAL)
 
+c = freqFramesCam
+n = freqFramesNT
 while(cap.isOpened()):
-    i = freqFrames
-    
-    # Determine time stamp
-    t = time.localtime()
-    stamp = str(t[1]) + "_" + str(t[2]) + "_" + str(t[0]) + "time_" + str(t[3]) + "_" + str(t[4]) + "_" + str(t[5])
-    # save only every 15 images?
-   
     # Capture frame-by-frame
     #    ret returns true or false (T if img read correctly); frame is array of img    
     ret, frame = cap.read()
@@ -63,12 +59,15 @@ while(cap.isOpened()):
         mask = Processed_frame
     else:
         try:
-            if i ==  freqFrames:
-                # Save every 15th frame to file
+            # Save frame to file
+            if c > freqFramesCam:
+                # Determine time stamp
+                t = time.localtime()
+                stamp = str(t[1]) + "_" + str(t[2]) + "_" + str(t[0]) + "time_" + str(t[3]) + "_" + str(t[4]) + "_" + str(t[5]) + "_" + str(c)
                 cv2.imwrite(frame_0 + stamp + '.jpg', frame)
-                i = 0
+                c = 0
             else:
-                i = i + 1
+                c = c + 1
         
             # Rotate image
             rows, cols, dim = frame.shape
@@ -87,9 +86,13 @@ while(cap.isOpened()):
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(Processed_frame,'LOCKED',(90,400), font, 3.8,(0,255,0),6,cv2.LINE_AA)
                 Locked = True
-                
-            # Send to NetworkTable
-            NT.sendValues(sd, Angle, Distance, validUpdate, Locked)
+            
+            if n > freqFramesNT:
+                # Send to NetworkTable
+                NT.sendValues(sd, Angle, Distance, validUpdate, Locked)
+                n = 0
+            else:
+                n = n + 1
             
             # Put crosshairs on image
             rows, cols, dim = Processed_frame.shape

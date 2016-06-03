@@ -20,8 +20,8 @@ import imageCalculationsClass as IC
 
 
 def findTarget(img_orig, filename):
-    global angle_avg, distance, validUpdate
-    angle_avg = 100
+    global angle, distance, validUpdate
+    angle = 1000
     distance = 0
     validUpdate = False
     
