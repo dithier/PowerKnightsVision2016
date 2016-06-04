@@ -51,20 +51,21 @@ def findTarget(img_orig, filename):
 
     if valid:
     # Find BFR
-        hull, corners, BFR_img = MI.bestFitRect(img_orig, cnt) # when working take out drawing part of fn
+        hull, corners, BFR_img = MI.bestFitRect(img_orig, cnt) 
         Contour_img = np.copy(BFR_img)
 		
-        # Check if Valid
+        # Check if Valid (has four corners and acceptable match quality to game target image)
         if MI.isValid(hull, corners):
 
             # Find and draw center
-            cx, cy = MI.findCenter(hull, BFR_img)   # maybe use contour center instead of hull center...
+            cx, cy = MI.findCenter(hull, BFR_img)  
             BFR_img = MI.drawCenterLine(BFR_img, cx,cy)
             
             # Find and display angle, distance, etc
             calculations = IC.imageMeasurements(BFR_img, cx, cy, corners)
             Rect_coor = calculations.organizeCorners()
-
+            
+            # Make calculations if Rect_coor has acceptable aspect ratio
             if MI.isValidAR(Rect_coor):
                 angle = calculations.findAngle()
                 distance = calculations.findDistance(Rect_coor)

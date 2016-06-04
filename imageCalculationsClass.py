@@ -15,9 +15,12 @@ class imageMeasurements:
         self.cx = cx
         self.cy = cy
         self.corners = corners
-        
+    
+    # Take corner coordinates and organize them in a specific order for easier computations later  
+    # This is necessary because the corners are returned in a different order each time they are determined
     def organizeCorners(self):
         
+        # Save coordinates to variable Rect_coor where corner 0 is the top left corner and the rest are numbered clockwise
         def saveCoordinates(topLeftX, topLeftY, topRightX, topRightY, bottomRightX, bottomRightY, bottomLeftX, bottomLeftY):
             Rect_coor = []
             for i in range(0,4):
@@ -32,59 +35,66 @@ class imageMeasurements:
             Rect_coor[3].append(bottomLeftY)
             return Rect_coor
             
-        # Determine correct order of corner coordinates 
-        #       Determine x coordinates
+        # Determine x coordinates
         corners2 = list(self.corners.ravel())
         x = []
                 
         for i in xrange(0, len(corners2), 2):
             x.append(corners2[i])
-        
+            
+        ''' There are three different cases that need to be considered: 1) There are no repeats in the x coordinates
+        meaning that you may have an array like [100, 200, 105, 202]  2) There is one repeat in the x coordinates such as
+        [100, 100, 200, 202]  3) There are two repeats in the x coordinates such as [100, 200, 100, 200]. The number of 
+        duplicates determines the methods to be used to determine the order of the coordinates. This is done below
+        '''
         # Check for duplicate and find value
-        duplicate = len(x) != len(set(x))
-        c = Counter(x).items()
-        doubleVal = []
-        if len(c) == 2:
+        duplicate = len(x) != len(set(x)) # returns True of False on whether there is a duplicate in the x array
+        c = Counter(x).items() # gives array listing the numbers in the array and how many times they occur
+        doubleVal = [] # this list keeps track of the VALUES of the x coordinates that are repeated. It will be empty if there are no repeats
+        if len(c) == 2: # there are two repeats in the x coordinates
             doubleVal.append(c[0][0])
             doubleVal.append(c[1][0])
             doubleVal.sort()
-        elif len(c) == 3:
+        elif len(c) == 3: # there is one repeat in the x coordinates
             for i in range(0,len(c)):
                 if c[i][1] == 2:
                     doubleVal.append(c[i][0])
                     break
         
-        # Determine if repeat number is max or min in array
+        # Determine if repeat number is max or min in array (ie whether it is a top left or right corner (max) or
+        # whether it is a bottom left or right corner (min))
         if len(doubleVal) > 0:
-            maximum = max(x) == doubleVal[0]
-                
+            maximum = max(x) == doubleVal[0] # returns True if it is a maximum (a top corner) or False if it isn't (meaning it is a bottom corner)
+            
         # Find top right and bottom right coordinates
         #     find the indices for the two right corners
-        if duplicate:
-            if len(doubleVal) == 1:
-                if maximum:
+        if duplicate: # if duplicate exists
+            if len(doubleVal) == 1: # if there is one duplicate
+                if maximum: # the duplicate is of a top corner
                     indices = [i for i, a in enumerate(x) if a == doubleVal[0]]
                     maxXind = indices[0]
                     secMaxXind = indices[1]
-                else: 
+                else: # the duplicate is of a bottom corner
                     maxXind = x.index(max(x))
                     copy = x[:]
                     copy.pop(maxXind)
                     secMaxVal = max(copy)
                     secMaxXind = x.index(secMaxVal)
-            else:
+            else: # there are two duplicates
                 indices = [i for i, a in enumerate(x) if a == doubleVal[1]]
                 maxXind = indices[0]
                 secMaxXind = indices[1]
-        else:
+        else: # there are not duplicates
             maxXind = x.index(max(x))
             copy = x[:]
             copy.pop(maxXind)
             secMaxVal = max(copy)
             secMaxXind = x.index(secMaxVal)
             
-        #     determine which index is top and by default is bottom
-        if corners2[maxXind*2 + 1] > corners2[secMaxXind*2 + 1]:
+        #     determine which index is top and by default is bottom by looking at corresponding 
+        # y values to the x coordinates 
+        # based on OpenCV coordinate system, top left of pic is (0,0) and x increases as it moves left and y increases as you move down
+        if corners2[maxXind*2 + 1] > corners2[secMaxXind*2 + 1]: 
             topRightX = x[secMaxXind]
             topRightY = corners2[secMaxXind*2 + 1]
             bottomRightX = x[maxXind]
@@ -118,6 +128,7 @@ class imageMeasurements:
             copy.pop(minXind)
             secMinVal = min(copy)
             secMinXind = x.index(secMinVal)
+            
         #     determine which index is top and by default is bottom
         if corners2[minXind*2 + 1] > corners2[secMinXind*2 + 1]:
             topLeftX = x[secMinXind]
@@ -159,11 +170,12 @@ class imageMeasurements:
         # dimensions from target (from game manual)
         targetWidth = 20.0 # in
         
+        robot2camera = 1.5 # ft    distance from front of robot to camera (so that distance calculation is distance from tower to front of robot)
+        
         def Distance(targetActual, imagePx, targetPx, cameraFOV):
-            robot2camera = 1.5 # ft    distance from front of robot to camera (so that distance calculation is distance from tower to front of robot)
             totalDistance = (((targetActual*imagePx)/targetPx)/2.0) / \
         			math.tan(((cameraFOV*math.pi)/180.0)/2.0)
-            totalDistance = int((totalDistance*100.0)/12.0)/100.0 + robot2camera # make into 2 decminal pt and ft
+            totalDistance = int((totalDistance*100.0)/12.0)/100.0  # make into 2 decminal pt and ft
             return totalDistance 
             
         def fixDistance(x): # use polynomial fit from MATLAB to adjust for error and get more exact result
@@ -174,11 +186,11 @@ class imageMeasurements:
         def targetPixelWidth():
             w1 = Rect_coor[1][0] - Rect_coor[0][0]
             w2 = Rect_coor[2][0] - Rect_coor[3][0]
-            width = (w1 + w2)/ 2.0
+            width = (w1 + w2)/ 2.0 # average width of target 
             return math.fabs(width)
         
-        totalDistance_W = Distance(targetWidth, w, targetPixelWidth(), horizontal_cameraFOV)
-        distance_horizontal = math.sqrt(totalDistance_W**2.0 - towerH**2.0)
+        totalDistance_W = Distance(targetWidth, w, targetPixelWidth(), horizontal_cameraFOV) # diagonal distance from camera to tower
+        distance_horizontal = math.sqrt(totalDistance_W**2.0 - towerH**2.0) + robot2camera # horizontal distance from front of robot to tower
         distance_final = int(fixDistance(distance_horizontal*12)*100.0)/100.0 
         
         font = cv2.FONT_HERSHEY_SIMPLEX

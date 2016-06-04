@@ -33,7 +33,7 @@ if NetworkTable._staticProvider is None:
 sd = NetworkTable.getTable("Camera")
 ##############################################################################
 
-cap = cv2.VideoCapture(url) # capture laptop camera, 0 is laptop cam, numbers after that are cameras attached
+cap = cv2.VideoCapture(url) # capture camera, 0 is laptop cam, numbers after that are cameras attached
 
  # Check to make sure cap was initialized in capture
 if cap.isOpened():
@@ -48,6 +48,7 @@ cv2.namedWindow('Camera Frame', cv2.WINDOW_NORMAL)
 
 c = freqFramesCam
 n = freqFramesNT
+
 while(cap.isOpened()):
     # Capture frame-by-frame
     #    ret returns true or false (T if img read correctly); frame is array of img    
@@ -63,7 +64,7 @@ while(cap.isOpened()):
             if c > freqFramesCam:
                 # Determine time stamp
                 t = time.localtime()
-                stamp = str(t[1]) + "_" + str(t[2]) + "_" + str(t[0]) + "time_" + str(t[3]) + "_" + str(t[4]) + "_" + str(t[5]) + "_" + str(c)
+                stamp = str(t[1]) + "_" + str(t[2]) + "_" + str(t[0]) + "time_" + str(t[3]) + "_" + str(t[4]) + "_" + str(t[5]) + "_" + str(n)
                 cv2.imwrite(frame_0 + stamp + '.jpg', frame)
                 c = 0
             else:
@@ -82,6 +83,7 @@ while(cap.isOpened()):
             Error = AE.findError(18) 
             #Error = AE.findError(Distance)
             
+            # If anle is in acceptable range, write LOCKED on picture
             if -Error <= Angle <= Error:
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(Processed_frame,'LOCKED',(90,400), font, 3.8,(0,255,0),6,cv2.LINE_AA)

@@ -17,3 +17,16 @@ def findError(distance):
     return angleError*(180.0/math.pi)
     
 
+#Function documentation
+
+#Triangle to goal
+#		  *		<-Robot
+#		 /|\    
+#		/ | \
+#	   /  |  \  <-longLeg (side)
+#	  /___|___\ <-shortLeg(bottom)
+#longLeg = distD / math.cos(angleError)
+#shortLeg = 2 * math.sin(angleError) * distD
+
+#distX = distance along the ground to the goal
+#correction = buffer on either ends of the goal to get the correct allowed width of the target for aiming
