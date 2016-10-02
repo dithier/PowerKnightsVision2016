@@ -5,10 +5,10 @@ Created on Tue May 17 23:52:34 2016
 @author: Ithier
 """
 
-def sendValues(sd, Angle, Distance, validUpdate, Locked):  
+def sendValues(sd, Angle, Distance, validCount, Locked):  
     sd.putNumber('Angle', Angle)
     sd.putNumber('Distance', Distance)
-    sd.putBoolean('validUpdate', validUpdate)
+    sd.putNumber('validCount', validCount)
     sd.putBoolean('Locked', Locked)
     
     

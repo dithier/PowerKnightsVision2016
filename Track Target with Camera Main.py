@@ -20,6 +20,8 @@ url = 'http://10.5.1.11/axis-cgi/mjpg/video.cgi?resolution=640x480'
 
 freqFramesCam = 20 # how often we're sampling the camera to save files 
 freqFramesNT = 10 # how often we're sending to network tables
+
+validCount = 0 # initialize how many validUpdates we've had
 #############################################################################
 from networktables import NetworkTable
 import logging
@@ -79,6 +81,9 @@ while(cap.isOpened()):
             Angle, Distance, validUpdate, Processed_frame, mask = FTM.findTarget(Rotated_frame,filename)
             Locked = False 
             
+            # Update how many validUpdates we've had so far
+            if validUpdate: validCount += 1
+            
             # Determine allowable angle offset 
             Error = AE.findError(18) 
             #Error = AE.findError(Distance)
@@ -91,7 +96,7 @@ while(cap.isOpened()):
             
             if n > freqFramesNT:
                 # Send to NetworkTable
-                NT.sendValues(sd, Angle, Distance, validUpdate, Locked)
+                NT.sendValues(sd, Angle, Distance, validCount, Locked)
                 n = 0
             else:
                 n = n + 1
