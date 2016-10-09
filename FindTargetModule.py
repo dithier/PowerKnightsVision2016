@@ -16,7 +16,7 @@ Created on Wed May 11 11:09:44 2016
 import cv2
 import numpy as np
 import manipulateImageModule as MI 
-import imageCalculationsClass as IC
+from imageCalculationsClass import*
 
 
 def findTarget(img_orig, filename):
@@ -47,24 +47,18 @@ def findTarget(img_orig, filename):
     ret,maskc = cv2.threshold(maskc,127,255,0)
     
     # Find contours
-    cnt, contours, valid = MI.contours(img_orig, maskc)
+    cnt, valid, Rect_coor, BFR_img, hull = MI.contours(img_orig, maskc)
 
     if valid: 
         validUpdate = True
-        
-        # Find BFR
-        hull, corners, BFR_img = MI.bestFitRect(img_orig, cnt) 
-      
+    
         # Find and draw center
         cx, cy = MI.findCenter(hull, BFR_img)  
-        BFR_img = MI.drawCenterLine(BFR_img, cx,cy)
-                
-        # Find and display angle, distance, etc
-        calculations = IC.imageMeasurements(BFR_img, cx, cy, corners)
-        Rect_coor = calculations.organizeCorners()
-        angle = calculations.findAngle()
-        distance = calculations.findDistance(Rect_coor)
-               
+        BFR_img = MI.drawCenterLine(BFR_img, cx,cy)  
+        
+        # Calculate angle and distance
+        angle = findAngle(BFR_img, cx)
+        distance = findDistance(BFR_img, Rect_coor)            
     else:
         validUpdate = False
         BFR_img = img_orig

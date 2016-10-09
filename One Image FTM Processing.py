@@ -12,15 +12,18 @@ directory = 'C:/Users/Ithier/Documents/OpenCV/FIRST 2016/PowerKnightsVision2016/
 #directory = 'C:/Users/Ithier/Documents/!!OpenCV/Mayhem/' # folder npz file is in
 filename = directory + 'imageValues.npz'
 
-frame = cv2.imread('1.jpg', 1)
+#picture = directory + '/Calibration Files/9.jpg'
+directory = 'C:/Users/Ithier/Documents/FIRST/2016/2016 Vision Processing Documentation _ToDistribute/Game Images/'
+picture = directory + '11.jpg'
+frame = cv2.imread(picture, 1)
 
 # Create resizable window for camera 
 cv2.namedWindow('Camera Frame', cv2.WINDOW_NORMAL)
 
 # Rotate image
-rows, cols, dim = frame.shape
-M = cv2.getRotationMatrix2D((cols/2, rows/2), 90, 1) # image center, angle, scaling  factor 
-frame = cv2.warpAffine(frame,M,(cols,rows))
+#rows, cols, dim = frame.shape
+#M = cv2.getRotationMatrix2D((cols/2, rows/2), 90, 1) # image center, angle, scaling  factor 
+#frame = cv2.warpAffine(frame,M,(cols,rows))
   
 # Process image
 Angle, Distance, validUpdate, Processed_frame, mask = FTM.findTarget(frame,filename)
@@ -28,10 +31,7 @@ Angle, Distance, validUpdate, Processed_frame, mask = FTM.findTarget(frame,filen
 if -1 <= Angle <= 1:
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(Processed_frame,'LOCKED',(90,400), font, 3.8,(0,255,0),6,cv2.LINE_AA)
-        
-    
-
-
+ 
 
 # Display the resulting frame
 cv2.imshow('Camera Frame', Processed_frame)

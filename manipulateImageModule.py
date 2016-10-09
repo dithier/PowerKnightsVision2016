@@ -15,63 +15,23 @@ Created on Wed Apr 20 12:37:06 2016
 import cv2
 import numpy as np 
 from heapq import nlargest
+from imageCalculationsClass import organizeCorners 
+
+minArea = 400
 
 def darkenImage(image, scale):
     darker = (image * scale).astype(np.uint8)
     return darker
-
-# Choose target with largest area    
-def prioritizeTarget(contours):
-    if len(contours) == 0: # no contours found
-        cnt = 0
-        valid = False
-    elif len(contours) == 1: # one contour found
-        cnt = contours[0]
-        if len(contours[0]) >= 4: # make sure contour has at least enough points to make a square, otherwise not valid
-            valid = True
-        else:
-            valid = False
-    else:
-        contours_revised = nlargest(2, contours, key=len) # take two longest contours
-        ''' Possible cases explored below for the two contours in "contours_revised": 1) both contours have appropriate lengths
-        (at least 4 points because we want a rectangle) so we should select the one with the greatest area  2) Neither of the
-        contours have appropriate length so neither are valid  3) one of the two contours has the appropriate length so that 
-        one should be selected 
-        '''
-        if len(contours_revised[0]) >= 4 and len(contours_revised[1]) >= 4:
-            valid = True
-            # Area of longest contour
-            momentsL = cv2.moments(contours_revised[0])
-            areaL = momentsL['m00']
-            # Area of second longest contour
-            momentsSL = cv2.moments(contours_revised[1])
-            areaSL = momentsSL['m00']
-            if areaL > areaSL:
-                cnt = contours_revised[0]
-            else:
-                cnt = contours_revised[1]
-        elif len(contours_revised[0]) <= 4 and len(contours_revised[1]) <= 4:
-            cnt = 0
-            valid = False
-        elif len(contours_revised[0]) <= 4:
-            cnt = contours_revised[1]
-            valid = True
-        else:
-            cnt = contours_revised[0]
-            valid = True
-        
-    return cnt, valid
     
-        
 def contours(img_orig, mask):
     _, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cnt, valid = prioritizeTarget(contours) # select the best contour that could be a target
+    cnt, valid, Rect_coor, BFR_img, hull = prioritizeTarget(contours, img_orig) # select the best contour that could be a target
     if valid:
         try:
             cv2.drawContours(img_orig, [cnt], -1, (255,0,0), 2)
         except:
             valid = False
-    return cnt, contours, valid
+    return cnt, valid, Rect_coor, BFR_img, hull
         
 def findCenter(cnt, image):
     M = cv2.moments(cnt)
@@ -166,7 +126,62 @@ def shapeMatch(hull):
     match_quality = cv2.matchShapes(cnt,hull,1,0.0)
     
     return match_quality 
-    
+
+def zeroVariables():
+    cnt = 0
+    Rect_coor = 0
+    BFR_img = 0
+    hull = 0
+    return cnt, Rect_coor, BFR_img, hull
+
+# Choose target with largest area    
+def prioritizeTarget(contours, img_orig):
+    valid = False
+    areas = []
+    if len(contours) == 0: # no contours found
+        cnt, Rect_coor, BFR_img, hull = zeroVariables()
+    else:
+        biggestContours = nlargest(20, contours, key=len) # take twenty longest contours
+        
+        # Determine area of each contour and sort by largest to smallest
+        for i in range(0,len(biggestContours)):
+            if len(biggestContours[i]) > 3:
+                contourMoment = cv2.moments(biggestContours[i])
+                contourArea = contourMoment['m00']
+                if contourArea > minArea:
+                    areas.append(contourArea) 
+        areas = np.array(areas)
+        area_indices = np.argsort(areas)
+        
+        if len(areas) > 0:
+            # Check for validity of contours in order of largest area to smallest
+            for i in reversed(area_indices):
+                # Find BFR
+                hull, corners, BFR_img = bestFitRect(img_orig, biggestContours[i])
+                
+                # Make sure there are 4 corners
+                if len(corners) == 4:
+                    Rect_coor = organizeCorners(corners)
+                    # Check validity
+                    validUpdate1 = isValidAR(Rect_coor)
+                    validUpdate2 = isValid(hull, corners)
+                    
+                    # If this breaks then we have found our contour
+                    if validUpdate1 == True and validUpdate2 == True:
+                        valid = True
+                        cnt = biggestContours[i]
+                        break
+                    
+                    # Assign zeros if we've tried all contours and none succesful
+                    if i == area_indices[0] and valid == False:
+                        cnt, Rect_coor, BFR_img, hull = zeroVariables()
+                        
+                else:
+                    cnt, Rect_coor, BFR_img, hull = zeroVariables()
+        else:
+            cnt, Rect_coor, BFR_img, hull = zeroVariables()
+           
+    return cnt, valid, Rect_coor, BFR_img, hull
 
    
     
